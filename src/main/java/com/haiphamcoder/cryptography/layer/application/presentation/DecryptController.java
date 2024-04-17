@@ -1,9 +1,12 @@
 package com.haiphamcoder.cryptography.layer.application.presentation;
 
 import com.haiphamcoder.cryptography.layer.domain.service.IAESCryptographyService;
+import com.haiphamcoder.cryptography.utils.Response;
+import com.haiphamcoder.cryptography.utils.ResponseFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @Slf4j
@@ -13,5 +16,17 @@ public class DecryptController {
 
     public DecryptController(IAESCryptographyService aesCryptographyService) {
         this.aesCryptographyService = aesCryptographyService;
+    }
+
+    @GetMapping("/{data}")
+    public Response<?> decrypt(
+            @RequestHeader Map<String, String> requestHeaders,
+            @PathVariable(value = "data") String data
+    ) {
+        String secretKey = requestHeaders.get("secret-key");
+        String salt = requestHeaders.get("salt");
+        String iv = requestHeaders.get("iv");
+        String mac = requestHeaders.get("mac");
+        return ResponseFactory.getSuccessResponse("Successful!", aesCryptographyService.decrypt(data, secretKey, salt, iv, mac));
     }
 }
