@@ -31,12 +31,6 @@ public class EncryptedInfoResponse {
         @JsonProperty(value = "encrypted_data")
         private String encryptedData = null;
 
-        @JsonProperty(value = "iv")
-        private String iv = null;
-
-        @JsonProperty(value = "salt")
-        private String salt = null;
-
         @JsonProperty(value = "mac")
         private String mac = null;
     }

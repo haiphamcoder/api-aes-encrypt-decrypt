@@ -23,10 +23,7 @@ public class DecryptController {
             @RequestHeader Map<String, String> requestHeaders,
             @PathVariable(value = "data") String data
     ) {
-        String secretKey = requestHeaders.get("secret-key");
-        String salt = requestHeaders.get("salt");
-        String iv = requestHeaders.get("iv");
         String mac = requestHeaders.get("mac");
-        return ResponseFactory.getSuccessResponse("Successful!", aesCryptographyService.decrypt(data, secretKey, salt, iv, mac));
+        return ResponseFactory.getSuccessResponse("Successful!", aesCryptographyService.decrypt(data, mac));
     }
 }

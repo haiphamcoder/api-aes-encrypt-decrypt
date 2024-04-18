@@ -4,9 +4,10 @@ import com.haiphamcoder.cryptography.layer.domain.service.IAESCryptographyServic
 import com.haiphamcoder.cryptography.utils.Response;
 import com.haiphamcoder.cryptography.utils.ResponseFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Slf4j
@@ -20,10 +21,8 @@ public class EncryptController {
 
     @GetMapping("/{data}")
     public Response<?> encrypt(
-            @RequestHeader Map<String, String> requestHeaders,
             @PathVariable(value = "data") String data
     ) {
-        String secretKey = requestHeaders.get("secret-key");
-        return ResponseFactory.getSuccessResponse("Successful!", aesCryptographyService.encrypt(data, secretKey));
+        return ResponseFactory.getSuccessResponse("Successful!", aesCryptographyService.encrypt(data));
     }
 }
