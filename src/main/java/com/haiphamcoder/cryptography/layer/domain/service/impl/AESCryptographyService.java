@@ -5,6 +5,7 @@ import com.haiphamcoder.cryptography.layer.domain.entity.EncryptedInfoResponse;
 import com.haiphamcoder.cryptography.layer.domain.service.IAESCryptographyService;
 import com.haiphamcoder.cryptography.utils.Pair;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.crypto.generators.SCrypt;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,7 +63,7 @@ public class AESCryptographyService implements IAESCryptographyService {
             // Return the encrypted data and MAC as a response
             EncryptedInfoResponse response = new EncryptedInfoResponse();
             EncryptedInfoResponse.EncryptedInfoData dataResponse = new EncryptedInfoResponse.EncryptedInfoData();
-            dataResponse.setEncryptedData(Base64.getEncoder().encodeToString(encryptedData));
+            dataResponse.setEncryptedData(Hex.encodeHexString(encryptedData));
             dataResponse.setMac(Hex.encodeHexString(mac));
             response.setData(dataResponse);
             return response;
@@ -79,9 +80,10 @@ public class AESCryptographyService implements IAESCryptographyService {
             Pair<byte[], byte[]> derivedKey = derivedKey(SECRET_KEY, SALT);
             byte[] encryptKey = derivedKey.getFirstElement();
             byte[] hmacKey = derivedKey.getSecondElement();
+            byte[] cipherTextBytes = Hex.decodeHex(cipherText);
 
             // Verify the MAC
-            byte[] calculatedMac = calculateHMAC(Base64.getDecoder().decode(cipherText), hmacKey, "HmacSHA256");
+            byte[] calculatedMac = calculateHMAC(cipherTextBytes, hmacKey, "HmacSHA256");
             if (!Hex.encodeHexString(calculatedMac).equals(mac)) {
                 return new DecryptedInfoResponse("MAC is not matched", 1);
             }
@@ -89,7 +91,7 @@ public class AESCryptographyService implements IAESCryptographyService {
             // Decrypt the data
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, makeKey(encryptKey), makeIV(IV));
-            byte[] decryptedData = cipher.doFinal(Base64.getDecoder().decode(cipherText));
+            byte[] decryptedData = cipher.doFinal(cipherTextBytes);
 
             // PKCS7 unpadding for the decrypted data
             byte[] unpaddedData = pkcs7Unpadding(decryptedData);
@@ -102,20 +104,15 @@ public class AESCryptographyService implements IAESCryptographyService {
             response.setData(dataResponse);
             return response;
         } catch (RuntimeException | NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException |
-                 InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+                 InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException |
+                 DecoderException e) {
             throw new RuntimeException(e);
         }
 
     }
 
     private Key makeKey(byte[] key) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] keyBytes = md.digest(key);
-            return new SecretKeySpec(keyBytes, "AES");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+            return new SecretKeySpec(key, "AES");
     }
 
     private AlgorithmParameterSpec makeIV(byte[] iv) {
